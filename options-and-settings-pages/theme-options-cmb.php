@@ -33,29 +33,30 @@ class Myprefix_Admin {
 	 * Holds an instance of the object
 	 *
 	 * @var Myprefix_Admin
-	 **/
-	private static $instance = null;
-
-	/**
-	 * Constructor
-	 * @since 0.1.0
 	 */
-	private function __construct() {
-		// Set our title
-		$this->title = __( 'Site Options', 'myprefix' );
-	}
+	protected static $instance = null;
 
 	/**
 	 * Returns the running object
 	 *
 	 * @return Myprefix_Admin
-	 **/
+	 */
 	public static function get_instance() {
-		if( is_null( self::$instance ) ) {
+		if ( null === self::$instance ) {
 			self::$instance = new self();
 			self::$instance->hooks();
 		}
+
 		return self::$instance;
+	}
+
+	/**
+	 * Constructor
+	 * @since 0.1.0
+	 */
+	protected function __construct() {
+		// Set our title
+		$this->title = __( 'Site Options', 'myprefix' );
 	}
 
 	/**
@@ -187,11 +188,28 @@ function myprefix_admin() {
 /**
  * Wrapper function around cmb2_get_option
  * @since  0.1.0
- * @param  string  $key Options array key
- * @return mixed        Option value
+ * @param  string $key     Options array key
+ * @param  mixed  $default Optional default value
+ * @return mixed           Option value
  */
-function myprefix_get_option( $key = '' ) {
-	return cmb2_get_option( myprefix_admin()->key, $key );
+function myprefix_get_option( $key = '', $default = null ) {
+	if ( function_exists( 'cmb2_get_option' ) ) {
+		// Use cmb2_get_option as it passes through some key filters.
+		return cmb2_get_option( myprefix_admin()->key, $key, $default );
+	}
+
+	// Fallback to get_option if CMB2 is not loaded yet.
+	$opts = get_option( myprefix_admin()->key, $key, $default );
+
+	$val = $default;
+
+	if ( 'all' == $key ) {
+		$val = $opts;
+	} elseif ( array_key_exists( $key, $opts ) && false !== $opts[ $key ] ) {
+		$val = $opts[ $key ];
+	}
+
+	return $val;
 }
 
 // Get it started
